@@ -11,6 +11,7 @@ from subprocess import PIPE
 import subprocess
 import shlex
 
+import time
 from datetime import datetime
 now = datetime.now()
 
@@ -108,10 +109,14 @@ dateid = sys.argv[2]
 hourid = sys.argv[3]
 tile = '4x4'
 
+# Wait time span (actualy, not from global preference)
+# Must use IOLoop ?
+time.sleep(int(settings.ADDONS_TIMESPAN))
+
 # Search the n last files
 os.chdir("/data/media/sda1/%s/%s" % (cameraid, dateid))
 files = glob.glob("*-*-*.jpg")
-nbtiles = int(eval(tile.replace('x','*')))
+nbtiles = int(eval(settings.ADDONS_TILE.replace('x','*')))
 files = sorted(files)[-nbtiles:]
 with open('/tmp/%s_event_files.txt' % cameraid, "wb" ) as fp:
     for filename in files:
