@@ -123,8 +123,13 @@ with open('/tmp/%s_event_files.txt' % cameraid, "wb" ) as fp:
         fp.write("%s\n" % filename)
     fp.close()
     
+# Create folder if not exist
+tile_folder =  "/data/media/sda1/%s/%s/tiling" % (cameraid, dateid)
+if not os.path.isdir(tile_folder):
+    os.mkdir(tile_folder)
+
 # Tiling the last event
-strnow = '%s:%s:%s.%s' % (now.hour, now.minute, now.second, now.microsecond)
-tile_filename = "tiling_event_%s.jpg" % strnow
+strnow = '%02d-%02d-%02d' % (now.hour, now.minute, now.second)
+tile_filename = "tiling/%s.jpg" % strnow
 command="montage @/tmp/%s_event_files.txt -geometry +3+3 -tile 4x4 -background black %s" % (cameraid, tile_filename)
 execute_command(command)
