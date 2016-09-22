@@ -2,6 +2,7 @@
 
 import logging
 import os.path
+import shutil
 import sys
 
 import glob
@@ -29,7 +30,7 @@ def execute_command(cmd):
     p = subprocess.Popen(cmdargs, stdout=PIPE, stderr=PIPE)
     output, errors = p.communicate()
     if p.returncode:
-        print('Failed running %s' % cmd)
+        print('Failed running %(cmd)s' % locals())
         raise Exception(errors)
     return output.decode('utf-8')
 
@@ -41,7 +42,7 @@ def parse_conf_line(line):
 
         parts = line.split(' ', 1)
         if len(parts) != 2:
-            raise Exception('invalid configuration line: %s' % line)
+            raise Exception('invalid configuration line: %(line)s' % locals())
 
         name, value = parts
         upper_name = name.upper().replace('-', '_')
@@ -85,7 +86,7 @@ def parse_conf_line(line):
             setattr(settings, upper_name, value)
 
         else:
-            logging.warn('unknown configuration option: %s' % name)
+            logging.warn('unknown configuration option: %(name)s' % locals())
 
 # Load global configuration
 config_file='/data/etc/motioneye.conf'
@@ -104,9 +105,9 @@ import sendmail
 #settings.ADDONS_SMTP_FROM, [settings.ADDONS_SMTP_TO], subject="mon test", message="mon message", files=[])
     
 # Parameters
-cameraid = sys.argv[1]
-dateid = sys.argv[2]
-hourid = sys.argv[3]
+camera_id = sys.argv[1]
+date_id = sys.argv[2]
+hour_id = sys.argv[3]
 tile = '4x4'
 
 # Wait time span (actualy, not from global preference)
@@ -114,22 +115,35 @@ tile = '4x4'
 time.sleep(int(settings.ADDONS_TIMESPAN))
 
 # Search the n last files
-os.chdir("/data/media/sda1/%s/%s" % (cameraid, dateid))
+camera_folder = "/data/media/sda1/%(camera_id)s" % locals()
+os.chdir("%(camera_folder)s/%(date_id)s" % locals())
 files = glob.glob("*-*-*.jpg")
 nbtiles = int(eval(settings.ADDONS_TILE.replace('x','*')))
 files = sorted(files)[-nbtiles:]
-with open('/tmp/%s_event_files.txt' % cameraid, "wb" ) as fp:
+with open('/tmp/%(camera_id)s_event_files.txt' % locals(), "wb" ) as fp:
     for filename in files:
-        fp.write("%s\n" % filename)
+        fp.write("%(filename)s\n" % locals())
     fp.close()
     
-# Create folder if not exist
-tile_folder =  "/data/media/sda1/%s/%s/tiling" % (cameraid, dateid)
+# Create folders if not exist
+tile_folder =  "%(camera_folder)s/%(date_id)s/tiling" % locals()
 if not os.path.isdir(tile_folder):
     os.mkdir(tile_folder)
 
+# Create folders if not exist
+lastsnap_folder = "%(camera_folder)s/tiling" % locals()
+if not os.path.isdir(lastsnap_folder):
+    os.mkdir(lastsnap_folder)
+
 # Tiling the last event
 strnow = '%02d-%02d-%02d' % (now.hour, now.minute, now.second)
-tile_filename = "tiling/%s.jpg" % strnow
-command="montage @/tmp/%s_event_files.txt -geometry +3+3 -tile 4x4 -background black %s" % (cameraid, tile_filename)
+tile_filename = "%(tile_folder)s/%(strnow)s.jpg" % locals()
+command="montage @/tmp/%(camera_id)s_event_files.txt -geometry +3+3 -tile 4x4 -background black %(tile_filename)s" % locals()
 execute_command(command)
+
+# Create symbolic link
+target = "%(lastsnap_folder)s/lastsnap.jpg" % locals()
+if os.path.isfile(tile_filename):
+    #Symbolic link seems not working by ftp server
+    #os.symlink(tile_filename,target)
+    shutil.copy(tile_filename, target)
