@@ -136,8 +136,8 @@ if not os.path.isdir(lastsnap_folder):
 # Tiling the last event
 strnow = '%02d-%02d-%02d' % (now.hour, now.minute, now.second)
 tile_filename = "%(tile_folder)s/%(strnow)s.jpg" % locals()
-img_resize='60%'
-command="montage @/tmp/%(camera_id)s_event_files.txt -geometry +3+3 -tile 4x4 -resize %(img_resize)s -background black %(tile_filename)s" % locals()
+img_quality='50'
+command="montage @/tmp/%(camera_id)s_event_files.txt -geometry +3+3 -tile 4x4 -strip -quality %(img_quality)s -background black %(tile_filename)s" % locals()
 execute_command(command)
 
 # Create symbolic link
