@@ -101,9 +101,7 @@ with open(user_config_file) as f:
         parse_conf_line(line)
 import sendmail
 
-#sendmail.send_mail(settings.ADDONS_SMTP_SERVER, int(settings.ADDONS_SMTP_PORT), settings.ADDONS_SMTP_ACCOUNT, settings.ADDONS_SMTP_PASSWORD, settings.ADDONS_SMTP_TLS == '1',
-#settings.ADDONS_SMTP_FROM, [settings.ADDONS_SMTP_TO], subject="mon test", message="mon message", files=[])
-    
+   
 # Parameters
 camera_id = sys.argv[1]
 date_id = sys.argv[2]
@@ -138,7 +136,8 @@ if not os.path.isdir(lastsnap_folder):
 # Tiling the last event
 strnow = '%02d-%02d-%02d' % (now.hour, now.minute, now.second)
 tile_filename = "%(tile_folder)s/%(strnow)s.jpg" % locals()
-command="montage @/tmp/%(camera_id)s_event_files.txt -geometry +3+3 -tile 4x4 -background black %(tile_filename)s" % locals()
+img_resize='60%'
+command="montage @/tmp/%(camera_id)s_event_files.txt -geometry +3+3 -tile 4x4 -resize %(img_resize)s -background black %(tile_filename)s" % locals()
 execute_command(command)
 
 # Create symbolic link
@@ -147,3 +146,7 @@ if os.path.isfile(tile_filename):
     #Symbolic link seems not working by ftp server
     #os.symlink(tile_filename,target)
     shutil.copy(tile_filename, target)
+
+# Send email
+sendmail.send_mail(settings.ADDONS_SMTP_SERVER, int(settings.ADDONS_SMTP_PORT), settings.ADDONS_SMTP_ACCOUNT, settings.ADDONS_SMTP_PASSWORD, settings.ADDONS_SMTP_TLS == '1',
+settings.ADDONS_SMTP_FROM, [settings.ADDONS_SMTP_TO], subject="Camera event on %(camera_id)s" % locals(), message="Camera event on %(camera_id)s" % locals(), files=[tile_filename])
